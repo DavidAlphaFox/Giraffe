@@ -28,9 +28,9 @@ type GiraffeMiddleware (next          : RequestDelegate,
 
     member __.Invoke (ctx : HttpContext) =
         task {
-            let start = System.Diagnostics.Stopwatch.GetTimestamp();
+            let start = System.Diagnostics.Stopwatch.GetTimestamp();//获取时间戳
 
-            let! result = func ctx
+            let! result = func ctx //执行handler
 
             if logger.IsEnabled LogLevel.Debug then
                 let freq = double System.Diagnostics.Stopwatch.Frequency

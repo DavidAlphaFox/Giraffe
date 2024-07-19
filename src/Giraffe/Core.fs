@@ -76,11 +76,11 @@ module Core =
         fun (next : HttpFunc) (ctx : HttpContext) ->
             task {
                 match! contextMap ctx with
-                | Some c ->
-                    match c.Response.HasStarted with
+                | Some c -> //返回全新的Ctx
+                    match c.Response.HasStarted with 
                     | true  -> return  Some c
-                    | false -> return! next c
-                | None      -> return  None
+                    | false -> return! next c //如果没有开始传输数据，继续链式调用
+                | None      -> return  None //没有全新的Ctx,直接结束
             }
 
     // ---------------------------
@@ -154,7 +154,7 @@ module Core =
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let private httpVerb (validate : string -> bool) : HttpHandler =
         fun (next : HttpFunc) (ctx : HttpContext) ->
-            if validate ctx.Request.Method
+            if validate ctx.Request.Method //检查时候对应的方法，只有在对应方法的时候才会执行
             then next ctx
             else skipPipeline
 
