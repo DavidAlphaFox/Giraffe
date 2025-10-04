@@ -22,10 +22,10 @@ type GiraffeMiddleware(next: RequestDelegate, handler: HttpHandler, loggerFactor
             raise (ArgumentNullException("next"))
 
     let logger = loggerFactory.CreateLogger<GiraffeMiddleware>()
-
+    //获取日志记录器
     // pre-compile the handler pipeline
     let func: HttpFunc = handler earlyReturn
-
+    //构建最handler的pipeline
     member __.Invoke(ctx: HttpContext) =
         task {
             let start = System.Diagnostics.Stopwatch.GetTimestamp()
@@ -49,7 +49,7 @@ type GiraffeMiddleware(next: RequestDelegate, handler: HttpHandler, loggerFactor
             if (result.IsNone) then
                 return! next.Invoke ctx
         }
-
+    //该对象对被调用
 // ---------------------------
 // Error Handling middleware
 // ---------------------------
@@ -98,7 +98,7 @@ type ApplicationBuilderExtensions() =
     [<Extension>]
     static member UseGiraffe(builder: IApplicationBuilder, handler: HttpHandler) =
         builder.UseMiddleware<GiraffeMiddleware> handler |> ignore
-
+    //开始使用Griaffe应用，GiraffeMiddleware是整个应用的核心
     /// <summary>
     /// Adds the <see cref="GiraffeErrorHandlerMiddleware" /> into the ASP.NET Core pipeline. The <see cref="GiraffeErrorHandlerMiddleware" /> has been configured in such a way that it only invokes the <see cref="ErrorHandler" /> when an unhandled exception bubbles up to the middleware. It therefore is recommended to add the <see cref="GiraffeErrorHandlerMiddleware" /> as the very first middleware above everything else.
     /// </summary>

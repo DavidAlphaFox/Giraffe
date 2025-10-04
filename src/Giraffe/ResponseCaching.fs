@@ -7,7 +7,7 @@ module ResponseCaching =
     open Microsoft.Net.Http.Headers
     open Microsoft.AspNetCore.Http
     open Microsoft.AspNetCore.ResponseCaching
-
+    //响应的Cache
     /// <summary>
     /// Specifies the directive for the `Cache-Control` HTTP header:
     ///
