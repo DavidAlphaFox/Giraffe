@@ -256,7 +256,7 @@ type HttpContextExtensions() =
             let serializer = ctx.GetJsonSerializer()
             return! serializer.DeserializeAsync<'T> ctx.Request.Body
         }
-
+    //将请求的Body部分转化成T类型的JSON
     /// <summary>
     /// Uses the <see cref="Xml.ISerializer"/> to deserialize the entire body of the <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> asynchronously into an object of type 'T.
     /// </summary>
@@ -288,7 +288,7 @@ type HttpContextExtensions() =
                 |> dict
                 |> ModelParser.parse<'T> cultureInfo
         }
-
+    //解析亲求中的Form表单，构建Dict
     /// <summary>
     /// Tries to parse all input elements from an HTML form into an object of type 'T.
     /// </summary>
@@ -321,7 +321,7 @@ type HttpContextExtensions() =
         |> Seq.map (fun i -> i.Key, i.Value)
         |> dict
         |> ModelParser.parse<'T> cultureInfo
-
+    //将请求的Query构建成dict后转化成模型
     /// <summary>
     /// Tries to parse all parameters of a request's query string into an object of type 'T.
     /// </summary>

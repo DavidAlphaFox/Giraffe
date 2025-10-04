@@ -15,19 +15,19 @@ module Core =
     /// If the result is Some HttpContext then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is None then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the next middleware.
     /// </summary>
     type HttpFuncResult = Task<HttpContext option>
-
+    // HttpFuncResult，默认是一个Task，其中的结果是Option HttpContext
     /// <summary>
     /// A HTTP function which takes an <see cref="Microsoft.AspNetCore.Http.HttpContext"/> object and returns a <see cref="HttpFuncResult"/>.
     /// The function may inspect the incoming <see cref="Microsoft.AspNetCore.Http.HttpRequest"/> and make modifications to the <see cref="Microsoft.AspNetCore.Http.HttpResponse"/> before returning a <see cref="HttpFuncResult"/>. The result can be either a <see cref="System.Threading.Tasks.Task"/> of Some HttpContext or a <see cref="System.Threading.Tasks.Task"/> of None.
     /// If the result is Some HttpContext then the Giraffe middleware will return the response to the client and end the pipeline. However, if the result is None then the Giraffe middleware will continue the ASP.NET Core pipeline by invoking the next middleware.
     /// </summary>
     type HttpFunc = HttpContext -> HttpFuncResult
-
+    //HttpFunc，是接收HttpContext返回HttpFuncResult的函数
     /// <summary>
     /// A HTTP handler is the core building block of a Giraffe web application. It works similarly to ASP.NET Core's middleware where it is self responsible for invoking the next <see cref="HttpFunc"/> function of the pipeline or shortcircuit the execution by directly returning a <see cref="System.Threading.Tasks.Task"/> of HttpContext option.
     /// </summary>
     type HttpHandler = HttpFunc -> HttpFunc
-
+    //而HttpHandler是接收HttpFunc然后再返回HttpFunc的一个函数，属于中间件的范畴
     /// <summary>
     /// The error handler function takes an <see cref="System.Exception"/> object as well as an <see cref="Microsoft.Extensions.Logging.ILogger"/> instance and returns a <see cref="HttpHandler"/> function which takes care of handling any uncaught application errors.
     /// </summary>
@@ -55,12 +55,12 @@ module Core =
     /// Use skipPipeline to shortcircuit the <see cref="HttpHandler"/> pipeline and return None to the surrounding <see cref="HttpHandler"/> or the Giraffe middleware (which would subsequently invoke the next middleware as a result of it).
     /// </summary>
     let skipPipeline: HttpFuncResult = Task.FromResult None
-
+    //快速结束当前的pipeline
     /// <summary>
     /// Use earlyReturn to shortcircuit the <see cref="HttpHandler"/> pipeline and return Some HttpContext to the surrounding <see cref="HttpHandler"/> or the Giraffe middleware (which would subsequently end the pipeline by returning the response back to the client).
     /// </summary>
     let earlyReturn: HttpFunc = Some >> Task.FromResult
-
+    //快速结束当前Pipeline，但是会返货HttpContext
     // ---------------------------
     // Convenience Handlers
     // ---------------------------
@@ -77,12 +77,12 @@ module Core =
             task {
                 match! contextMap ctx with
                 | Some c ->
-                    match c.Response.HasStarted with
+                    match c.Response.HasStarted with //如果响应已经开始，则直接返回结果，否则使用next继续向下调用
                     | true -> return Some c
                     | false -> return! next c
                 | None -> return None
             }
-
+    // 快速的构建一个新的HttpHandler
     // ---------------------------
     // Default Combinators
     // ---------------------------
@@ -101,10 +101,10 @@ module Core =
             let func = final |> handler2 |> handler1
 
             fun (ctx: HttpContext) ->
-                match ctx.Response.HasStarted with
+                match ctx.Response.HasStarted with //如果响应已经开始，直接调用final函数，否则调用Compose函数
                 | true -> final ctx
                 | false -> func ctx
-
+    //合并两个handler
     /// <summary>
     /// Combines two <see cref="HttpHandler"/> functions into one.
     /// Please mind that both <see cref="HttpHandler"/> functions will get pre-evaluated at runtime by applying the next <see cref="HttpFunc"/> parameter of each handler.
@@ -120,14 +120,14 @@ module Core =
     let rec private chooseHttpFunc (funcs: HttpFunc list) : HttpFunc =
         fun (ctx: HttpContext) ->
             task {
-                match funcs with
-                | [] -> return None
+                match funcs with //检查函数列表
+                | [] -> return None //空直接返回None
                 | func :: tail ->
-                    let! result = func ctx
+                    let! result = func ctx //获取当前函数结果
 
                     match result with
-                    | Some c -> return Some c
-                    | None -> return! chooseHttpFunc tail ctx
+                    | Some c -> return Some c //已经产生了最终的结果
+                    | None -> return! chooseHttpFunc tail ctx //没有结果，继续使用列表中剩余的函数进行处理
             }
 
     /// <summary>
@@ -139,8 +139,8 @@ module Core =
     /// <returns>A <see cref="HttpFunc"/>.</returns>
     let choose (handlers: HttpHandler list) : HttpHandler =
         fun (next: HttpFunc) ->
-            let funcs = handlers |> List.map (fun h -> h next)
-            fun (ctx: HttpContext) -> chooseHttpFunc funcs ctx
+            let funcs = handlers |> List.map (fun h -> h next) //转成全新的函数，每个函数都绑定next，列表中的函数都是平级的
+            fun (ctx: HttpContext) -> chooseHttpFunc funcs ctx //将新函数传递给chooseHttpFunc这个工具函数
 
     // ---------------------------
     // Default HttpHandlers
@@ -155,10 +155,10 @@ module Core =
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let private httpVerb (validate: string -> bool) : HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
-            if validate ctx.Request.Method then
+            if validate ctx.Request.Method then //HTTP请求的方法是所预期的，执行next函数
                 next ctx
             else
-                skipPipeline
+                skipPipeline //否则提前结束这pipeline
 
     let GET: HttpHandler = httpVerb HttpMethods.IsGet
     let POST: HttpHandler = httpVerb HttpMethods.IsPost
@@ -183,7 +183,7 @@ module Core =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.Response.Clear()
             next ctx
-
+    // 清空返回值
     /// <summary>
     /// Sets the Content-Type HTTP header in the response.
     /// </summary>
@@ -195,7 +195,7 @@ module Core =
         fun next ctx ->
             ctx.SetContentType contentType
             next ctx
-
+    //设置返回的类型
     /// <summary>
     /// Sets the HTTP status code of the response.
     /// </summary>
@@ -207,7 +207,7 @@ module Core =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.SetStatusCode statusCode
             next ctx
-
+    //设置状态值
     /// <summary>
     /// Adds or sets a HTTP header in the response.
     /// </summary>
@@ -220,7 +220,7 @@ module Core =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.SetHttpHeader(key, value)
             next ctx
-
+    //设置HTTP Header
     /// <summary>
     /// Filters an incoming HTTP request based on the accepted mime types of the client (Accept HTTP header).
     /// If the client doesn't accept any of the provided mimeTypes then the handler will not continue executing the next <see cref="HttpHandler"/> function.
@@ -232,15 +232,15 @@ module Core =
     let mustAccept (mimeTypes: string list) : HttpHandler =
         let acceptedMimeTypes: MediaTypeHeaderValue list =
             mimeTypes |> List.map (MediaTypeHeaderValue.Parse)
-
+        //将string类型的mine types转化成MediaTypeHeaderValue
         fun (next: HttpFunc) (ctx: HttpContext) ->
-            let headers = ctx.Request.GetTypedHeaders()
-
+            let headers = ctx.Request.GetTypedHeaders() //得到请求Headers
+            //使用Headers中的Accept去和我们想要的类型进行匹配
             headers.Accept
             |> Seq.exists (fun h -> acceptedMimeTypes |> List.exists (fun amt -> amt.IsSubsetOf(h)))
             |> function
-                | true -> next ctx
-                | false -> skipPipeline
+                | true -> next ctx //类型比配继续向下执行
+                | false -> skipPipeline //没找到期望的类型，结束当前pipeline
 
     /// <summary>
     /// Redirects to a different location with a `302` or `301` (when permanent) HTTP status code.
@@ -254,7 +254,7 @@ module Core =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             ctx.Response.Redirect(location, permanent)
             Task.FromResult(Some ctx)
-
+    //301或者302，跳转特定的URL上
     // ---------------------------
     // Model binding functions
     // ---------------------------
@@ -270,8 +270,8 @@ module Core =
     let bindJson<'T> (f: 'T -> HttpHandler) : HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
-                let! model = ctx.BindJsonAsync<'T>()
-                return! f model next ctx
+                let! model = ctx.BindJsonAsync<'T>() //将请求的Body转成特定的模型
+                return! f model next ctx //调用函数处理模型
             }
 
     /// <summary>
@@ -404,7 +404,7 @@ module Core =
 
                 return! f model next ctx
             }
-
+    //尝试自动绑定模型
     // ---------------------------
     // Response writing functions
     // ---------------------------
@@ -428,7 +428,7 @@ module Core =
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let setBody (bytes: byte array) : HttpHandler =
         fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteBytesAsync bytes
-
+    //设置返回的body
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly.
     /// </summary>
