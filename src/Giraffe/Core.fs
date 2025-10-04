@@ -437,7 +437,7 @@ module Core =
     let setBodyFromString (str: string) : HttpHandler =
         let bytes = Encoding.UTF8.GetBytes str
         fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteBytesAsync bytes
-
+    //从字符串构建返回的Body，并设置到上下文
     /// <summary>
     /// Writes an UTF-8 encoded string to the body of the HTTP response and sets the HTTP Content-Length header accordingly, as well as the Content-Type header to text/plain.
     /// </summary>
@@ -449,7 +449,7 @@ module Core =
         fun (_: HttpFunc) (ctx: HttpContext) ->
             ctx.SetContentType "text/plain; charset=utf-8"
             ctx.WriteBytesAsync bytes
-
+    //返回一个Text的结果
     /// <summary>
     /// Serializes an object to JSON and writes the output to the body of the HTTP response.
     /// It also sets the HTTP Content-Type header to application/json and sets the Content-Length header accordingly.
@@ -461,7 +461,7 @@ module Core =
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let json<'T> (dataObj: 'T) : HttpHandler =
         fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteJsonAsync dataObj
-
+    //返回一个JSON的结果
     /// <summary>
     /// Serializes an object to JSON and writes the output to the body of the HTTP response using chunked transfer encoding.
     /// It also sets the HTTP Content-Type header to application/json and sets the Transfer-Encoding header to chunked.
@@ -493,7 +493,7 @@ module Core =
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let htmlFile (filePath: string) : HttpHandler =
         fun (_: HttpFunc) (ctx: HttpContext) -> ctx.WriteHtmlFileAsync filePath
-
+    //响应HTML静态文件
     /// <summary>
     /// Writes a HTML string to the body of the HTTP response.
     /// It also sets the HTTP header Content-Type to text/html and sets the Content-Length header accordingly.
@@ -506,7 +506,7 @@ module Core =
         fun (_: HttpFunc) (ctx: HttpContext) ->
             ctx.SetContentType "text/html; charset=utf-8"
             ctx.WriteBytesAsync bytes
-
+    //响应HTML字符串
     /// <summary>
     /// <para>Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.</para>
     /// <para>It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.</para>
@@ -515,7 +515,8 @@ module Core =
     /// <returns>A Giraffe `HttpHandler` function which can be composed into a bigger web application.</returns>
     let htmlView (htmlView: XmlNode) : HttpHandler =
         let bytes = RenderView.AsBytes.htmlDocument htmlView
-
+        
         fun (_: HttpFunc) (ctx: HttpContext) ->
             ctx.SetContentType "text/html; charset=utf-8"
             ctx.WriteBytesAsync bytes
+    //使用RenderView将htmlView转化成字符串，然后响应给前端

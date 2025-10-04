@@ -453,7 +453,7 @@ type HttpContextExtensions() =
             // ourselves rather than rely on asp.net to do it for us.
             // Example : https://github.com/aspnet/AspNetCore/blame/728110ec9ee1b98b2d9c9ff247ba2955d6c05846/src/Servers/Kestrel/test/InMemory.FunctionalTests/ChunkedResponseTests.cs#L494
             ctx.SetContentType "application/json; charset=utf-8"
-
+            //请求是非HEAD操作，传输JSON数据
             if ctx.Request.Method <> HttpMethods.Head then
                 let serializer = ctx.GetJsonSerializer()
                 do! serializer.SerializeToStreamAsync dataObj ctx.Response.Body
